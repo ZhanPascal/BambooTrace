@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">汉字书法练习</string>
+
+    <!-- 主界面 -->
+    <string name="tab_home">首页</string>
+    <string name="tab_library">字库</string>
+    <string name="tab_history">历史</string>
+    <string name="tab_favorites">收藏</string>
+
+    <!-- 练习界面 -->
+    <string name="practice_title">练习</string>
+    <string name="btn_undo">撤销</string>
+    <string name="btn_redo">重做</string>
+    <string name="btn_clear">清除</string>
+    <string name="btn_save">保存</string>
+    <string name="btn_share">分享</string>
+
+    <!-- 字体 -->
+    <string name="font_kaishu">楷书</string>
+    <string name="font_xingshu">行书</string>
+    <string name="font_lishu">隶书</string>
+    <string name="font_caoshu">草书</string>
+    <string name="font_zhuanshu">篆书</string>
+
+    <!-- 网格 -->
+    <string name="grid_mi">米字格</string>
+    <string name="grid_tian">田字格</string>
+    <string name="grid_nine">九宫格</string>
+    <string name="grid_none">无网格</string>
+
+    <!-- 设置 -->
+    <string name="settings">设置</string>
+    <string name="show_reference">显示范本</string>
+    <string name="show_outline">显示轮廓</string>
+    <string name="brush_width">笔刷粗细</string>
+
+    <!-- 提示 -->
+    <string name="tip_select_character">选择汉字开始练习</string>
+    <string name="tip_save_success">保存成功</string>
+    <string name="tip_save_failed">保存失败</string>
+</resources>
