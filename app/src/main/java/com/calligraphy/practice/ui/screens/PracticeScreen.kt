@@ -33,8 +33,15 @@ fun PracticeScreen(
     var showToolbar by remember { mutableStateOf(true) }
 
     // 练习格子数量（可根据需要调整）
-    val numCells = 12
+    val numCellsWithTemplate = 12 // 有范本的格子
+    val numEmptyCells = 4 // 空白格子（无范本）
+    val totalCells = numCellsWithTemplate + numEmptyCells
+
     val cellScores = remember { mutableStateMapOf<Int, Float>() }
+    var activeCellIndex by remember { mutableStateOf<Int?>(null) } // 活跃格子索引
+    var triggerScore by remember { mutableStateOf(0) } // 评分触发器
+    var clearTrigger by remember { mutableStateOf(0) } // 清空触发器
+    var undoTrigger by remember { mutableStateOf(0) } // 撤回触发器
 
     // 控制选项菜单
     var showFontMenu by remember { mutableStateOf(false) }
@@ -50,7 +57,7 @@ fun PracticeScreen(
                             Text("练习: $character")
                             val passedCells = cellScores.values.count { it >= 80f }
                             Text(
-                                "进度: $passedCells/$numCells 通过",
+                                "进度: $passedCells/$numCellsWithTemplate 通过 (+${numEmptyCells}空格)",
                                 style = MaterialTheme.typography.labelSmall
                             )
                         }
@@ -61,6 +68,27 @@ fun PracticeScreen(
                         }
                     },
                     actions = {
+                        // 撤回按钮
+                        IconButton(
+                            onClick = { undoTrigger++ }
+                        ) {
+                            Icon(Icons.Default.Undo, "撤回")
+                        }
+
+                        // 清空按钮
+                        IconButton(
+                            onClick = { clearTrigger++ }
+                        ) {
+                            Icon(Icons.Default.Delete, "清空")
+                        }
+
+                        // 评分按钮
+                        IconButton(
+                            onClick = { triggerScore++ }
+                        ) {
+                            Icon(Icons.Default.CheckCircle, "评分")
+                        }
+
                         // 更多选项
                         IconButton(onClick = { showOptionsMenu = true }) {
                             Icon(Icons.Default.MoreVert, "更多")
@@ -71,18 +99,29 @@ fun PracticeScreen(
                             onDismissRequest = { showOptionsMenu = false }
                         ) {
                             DropdownMenuItem(
-                                text = { Text(if (showToolbar) "隐藏工具栏" else "显示工具栏") },
+                                text = { Text("隐藏工具栏") },
                                 onClick = {
-                                    showToolbar = !showToolbar
+                                    showToolbar = false
                                     showOptionsMenu = false
                                 },
                                 leadingIcon = {
-                                    Icon(Icons.Default.Visibility, null)
+                                    Icon(Icons.Default.VisibilityOff, null)
                                 }
                             )
                         }
                     }
                 )
+            }
+        },
+        floatingActionButton = {
+            // 悬浮按钮：隐藏工具栏时显示
+            if (!showToolbar) {
+                FloatingActionButton(
+                    onClick = { showToolbar = true },
+                    containerColor = MaterialTheme.colorScheme.primary
+                ) {
+                    Icon(Icons.Default.Menu, "显示工具栏")
+                }
             }
         },
         bottomBar = {
@@ -207,6 +246,7 @@ fun PracticeScreen(
             }
         }
     ) { paddingValues ->
+        // 使用LazyVerticalGrid实现懒加载，只渲染可见的格子
         LazyVerticalGrid(
             columns = GridCells.Adaptive(minSize = 130.dp),
             modifier = Modifier
@@ -214,18 +254,34 @@ fun PracticeScreen(
                 .padding(paddingValues),
             contentPadding = PaddingValues(16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            state = rememberLazyGridState()
         ) {
-            items(numCells) { index ->
+            items(
+                count = totalCells,
+                key = { index -> index }
+            ) { index ->
+                // 使用key确保每个格子的状态独立
+                val isEmptyCell = index >= numCellsWithTemplate
+
                 PracticeCell(
                     character = character,
                     cellSize = 120,
                     fontPath = selectedFont.fontFileName,
                     gridType = gridType,
-                    showReference = showReference,
-                    showOutline = showOutline,
+                    showReference = if (isEmptyCell) false else showReference, // 空格子不显示范本
+                    showOutline = if (isEmptyCell) false else showOutline, // 空格子不显示轮廓
+                    triggerScore = triggerScore,
+                    clearTrigger = clearTrigger,
+                    undoTrigger = undoTrigger,
+                    isActive = activeCellIndex == index, // 是否是活跃格子
+                    onActive = {
+                        activeCellIndex = index // 设置为活跃格子
+                    },
                     onScoreChanged = { score ->
-                        cellScores[index] = score
+                        if (!isEmptyCell) { // 只计算有范本格子的分数
+                            cellScores[index] = score
+                        }
                     }
                 )
             }

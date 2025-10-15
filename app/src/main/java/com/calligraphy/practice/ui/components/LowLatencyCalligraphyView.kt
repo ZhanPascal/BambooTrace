@@ -22,12 +22,28 @@ import kotlin.math.sqrt
 fun LowLatencyCalligraphyCanvas(
     modifier: Modifier = Modifier,
     baseBrushWidth: Float = 18f,
-    onStrokeAdded: (CalligraphyStroke) -> Unit = {}
+    clearTrigger: Int = 0, // 清空触发器
+    undoTrigger: Int = 0, // 撤回触发器
+    isActive: Boolean = false, // 是否是活跃格子
+    backgroundBitmap: android.graphics.Bitmap? = null, // 背景位图（范本字+网格）
+    onTouchStart: () -> Unit = {}, // 开始触摸时回调
+    onStrokeAdded: (CalligraphyStroke) -> Unit = {},
+    onStrokesChanged: (List<CalligraphyStroke>) -> Unit = {}
 ) {
     AndroidView(
         modifier = modifier,
         factory = { context ->
-            LowLatencyCalligraphyView(context, baseBrushWidth, onStrokeAdded)
+            LowLatencyCalligraphyView(context, baseBrushWidth, onTouchStart, onStrokeAdded, onStrokesChanged)
+        },
+        update = { view ->
+            // 更新背景位图
+            view.setBackgroundBitmap(backgroundBitmap)
+
+            // 只有活跃格子才响应清空和撤回
+            if (isActive) {
+                view.handleClearTrigger(clearTrigger)
+                view.handleUndoTrigger(undoTrigger)
+            }
         }
     )
 }
@@ -38,7 +54,9 @@ fun LowLatencyCalligraphyCanvas(
 class LowLatencyCalligraphyView(
     context: Context,
     private val baseBrushWidth: Float,
-    private val onStrokeAdded: (CalligraphyStroke) -> Unit
+    private val onTouchStart: () -> Unit,
+    private val onStrokeAdded: (CalligraphyStroke) -> Unit,
+    private val onStrokesChanged: (List<CalligraphyStroke>) -> Unit
 ) : SurfaceView(context), SurfaceHolder.Callback {
 
     private var currentPath: Path? = null
@@ -48,6 +66,13 @@ class LowLatencyCalligraphyView(
     private var lastX = 0f
     private var lastY = 0f
     private var lastTime = 0L
+
+    // 触发器跟踪
+    private var lastClearTrigger = 0
+    private var lastUndoTrigger = 0
+
+    // 背景位图（范本字+网格）
+    private var backgroundBitmap: android.graphics.Bitmap? = null
 
     // Paint对象复用，避免重复创建
     private val strokePaint = Paint().apply {
@@ -85,6 +110,7 @@ class LowLatencyCalligraphyView(
     override fun onTouchEvent(event: MotionEvent): Boolean {
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
+                onTouchStart() // 通知这个格子被触摸了
                 startNewStroke(event)
                 drawImmediate()
                 return true
@@ -175,10 +201,61 @@ class LowLatencyCalligraphyView(
             if (stroke.points.size > 1) {
                 completedStrokes.add(stroke)
                 onStrokeAdded(stroke)
+                onStrokesChanged(completedStrokes.toList())
             }
         }
         currentStroke = null
         currentPath = null
+    }
+
+    /**
+     * 撤回上一笔
+     */
+    fun undo() {
+        if (completedStrokes.isNotEmpty()) {
+            completedStrokes.removeAt(completedStrokes.size - 1)
+            onStrokesChanged(completedStrokes.toList())
+            drawImmediate()
+        }
+    }
+
+    /**
+     * 清空所有笔画
+     */
+    fun clear() {
+        completedStrokes.clear()
+        currentStroke = null
+        currentPath = null
+        onStrokesChanged(emptyList())
+        drawImmediate()
+    }
+
+    /**
+     * 处理清空触发器
+     */
+    fun handleClearTrigger(trigger: Int) {
+        if (trigger > lastClearTrigger) {
+            lastClearTrigger = trigger
+            clear()
+        }
+    }
+
+    /**
+     * 处理撤回触发器
+     */
+    fun handleUndoTrigger(trigger: Int) {
+        if (trigger > lastUndoTrigger) {
+            lastUndoTrigger = trigger
+            undo()
+        }
+    }
+
+    /**
+     * 设置背景位图
+     */
+    fun setBackgroundBitmap(bitmap: android.graphics.Bitmap?) {
+        backgroundBitmap = bitmap
+        drawImmediate()
     }
 
     /**
@@ -201,6 +278,11 @@ class LowLatencyCalligraphyView(
         try {
             // 清空画布
             canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
+
+            // 绘制背景（范本字+网格）
+            backgroundBitmap?.let { bitmap ->
+                canvas.drawBitmap(bitmap, 0f, 0f, null)
+            }
 
             // 绘制已完成的笔画
             completedStrokes.forEach { stroke ->

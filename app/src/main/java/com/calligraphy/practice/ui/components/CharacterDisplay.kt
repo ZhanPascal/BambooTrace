@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import com.calligraphy.practice.utils.FontCache
 
 /**
  * 汉字显示组件
@@ -39,16 +40,11 @@ fun CharacterDisplay(
                 isAntiAlias = true
                 textAlign = android.graphics.Paint.Align.CENTER
 
-                // 加载自定义字体
-                if (fontPath != null) {
-                    try {
-                        typeface = Typeface.createFromAsset(context.assets, fontPath)
-                    } catch (e: Exception) {
-                        // 如果字体加载失败,使用系统默认字体
-                        typeface = Typeface.DEFAULT
-                    }
+                // 使用缓存的字体（避免重复加载）
+                typeface = if (fontPath != null) {
+                    FontCache.getTypeface(context, fontPath)
                 } else {
-                    typeface = Typeface.DEFAULT
+                    Typeface.DEFAULT
                 }
 
                 // 设置文字大小为格子大小的80%
