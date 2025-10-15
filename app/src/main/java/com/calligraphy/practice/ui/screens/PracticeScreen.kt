@@ -1,6 +1,10 @@
 package com.calligraphy.practice.ui.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -27,8 +31,10 @@ fun PracticeScreen(
     var showReference by remember { mutableStateOf(true) }
     var showOutline by remember { mutableStateOf(true) }
     var showToolbar by remember { mutableStateOf(true) }
-    var strokes by remember { mutableStateOf<List<CalligraphyStroke>>(emptyList()) }
-    var undoStack by remember { mutableStateOf<List<List<CalligraphyStroke>>>(emptyList()) }
+
+    // 练习格子数量（可根据需要调整）
+    val numCells = 12
+    val cellScores = remember { mutableStateMapOf<Int, Float>() }
 
     // 控制选项菜单
     var showFontMenu by remember { mutableStateOf(false) }
@@ -39,51 +45,22 @@ fun PracticeScreen(
         topBar = {
             if (showToolbar) {
                 TopAppBar(
-                    title = { Text("练习: $character") },
+                    title = {
+                        Column {
+                            Text("练习: $character")
+                            val passedCells = cellScores.values.count { it >= 80f }
+                            Text(
+                                "进度: $passedCells/$numCells 通过",
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        }
+                    },
                     navigationIcon = {
                         IconButton(onClick = onNavigateBack) {
                             Icon(Icons.Default.ArrowBack, "返回")
                         }
                     },
                     actions = {
-                        // 撤销
-                        IconButton(
-                            onClick = {
-                                if (strokes.isNotEmpty()) {
-                                    undoStack = undoStack + listOf(strokes)
-                                    strokes = strokes.dropLast(1)
-                                }
-                            },
-                            enabled = strokes.isNotEmpty()
-                        ) {
-                            Icon(Icons.Default.Undo, "撤销")
-                        }
-
-                        // 重做
-                        IconButton(
-                            onClick = {
-                                if (undoStack.isNotEmpty()) {
-                                    strokes = undoStack.last()
-                                    undoStack = undoStack.dropLast(1)
-                                }
-                            },
-                            enabled = undoStack.isNotEmpty()
-                        ) {
-                            Icon(Icons.Default.Redo, "重做")
-                        }
-
-                        // 清除
-                        IconButton(
-                            onClick = {
-                                if (strokes.isNotEmpty()) {
-                                    undoStack = undoStack + listOf(strokes)
-                                    strokes = emptyList()
-                                }
-                            }
-                        ) {
-                            Icon(Icons.Default.Delete, "清除")
-                        }
-
                         // 更多选项
                         IconButton(onClick = { showOptionsMenu = true }) {
                             Icon(Icons.Default.MoreVert, "更多")
@@ -93,16 +70,6 @@ fun PracticeScreen(
                             expanded = showOptionsMenu,
                             onDismissRequest = { showOptionsMenu = false }
                         ) {
-                            DropdownMenuItem(
-                                text = { Text("保存作品") },
-                                onClick = {
-                                    // TODO: 实现保存功能
-                                    showOptionsMenu = false
-                                },
-                                leadingIcon = {
-                                    Icon(Icons.Default.Save, null)
-                                }
-                            )
                             DropdownMenuItem(
                                 text = { Text(if (showToolbar) "隐藏工具栏" else "显示工具栏") },
                                 onClick = {
@@ -240,38 +207,25 @@ fun PracticeScreen(
             }
         }
     ) { paddingValues ->
-        Box(
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize = 130.dp),
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(paddingValues),
+            contentPadding = PaddingValues(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // 书写区域容器
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
-            ) {
-                // 汉字范本层
-                CharacterTemplate(
+            items(numCells) { index ->
+                PracticeCell(
                     character = character,
+                    cellSize = 120,
                     fontPath = selectedFont.fontFileName,
+                    gridType = gridType,
                     showReference = showReference,
                     showOutline = showOutline,
-                    modifier = Modifier.fillMaxSize()
-                )
-
-                // 网格辅助线层
-                GridOverlay(
-                    gridType = gridType,
-                    modifier = Modifier.fillMaxSize()
-                )
-
-                // 手写Canvas层
-                CalligraphyCanvas(
-                    modifier = Modifier.fillMaxSize(),
-                    backgroundColor = Color.Transparent,
-                    onStrokeAdded = { stroke ->
-                        strokes = strokes + stroke
+                    onScoreChanged = { score ->
+                        cellScores[index] = score
                     }
                 )
             }

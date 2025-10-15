@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">汉字书法练习</string>
+    <string name="app_name">BambooTrace</string>
 
     <!-- 主界面 -->
     <string name="tab_home">首页</string>

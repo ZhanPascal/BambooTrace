@@ -50,5 +50,5 @@ enum class CalligraphyFont(val fontFileName: String, val displayName: String) {
     XINGSHU("fonts/xingshu.ttf", "行书"),
     LISHU("fonts/lishu.ttf", "隶书"),
     CAOSHU("fonts/caoshu.ttf", "草书"),
-    ZHUANSHU("fonts/zhuanshu.ttf", "篆书")
+    ZHUANSHU("fonts/hanyikaiti.ttf", "汉仪楷体")
 }

@@ -10,7 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import com.calligraphy.practice.ui.screens.MainScreen
 import com.calligraphy.practice.ui.screens.PracticeScreen
-import com.calligraphy.practice.ui.theme.ChineseCalligraphyTheme
+import com.calligraphy.practice.ui.theme.BambooTraceTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 /**
@@ -21,12 +21,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            ChineseCalligraphyTheme {
+            BambooTraceTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    CalligraphyApp()
+                    BambooTraceApp()
                 }
             }
         }
@@ -38,7 +38,7 @@ class MainActivity : ComponentActivity() {
  * 处理导航逻辑
  */
 @Composable
-fun CalligraphyApp() {
+fun BambooTraceApp() {
     var currentScreen by remember { mutableStateOf<Screen>(Screen.Main) }
     var selectedCharacter by remember { mutableStateOf("") }
 

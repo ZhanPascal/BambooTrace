@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "ChineseCalligraphy"
+rootProject.name = "BambooTrace"
 include(":app")

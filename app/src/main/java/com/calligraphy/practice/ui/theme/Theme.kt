@@ -68,7 +68,7 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 @Composable
-fun ChineseCalligraphyTheme(
+fun BambooTraceTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {

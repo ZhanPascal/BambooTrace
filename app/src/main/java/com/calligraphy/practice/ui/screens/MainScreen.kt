@@ -41,7 +41,7 @@ fun MainScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("汉字书法练习") },
+                title = { Text("BambooTrace") },
                 actions = {
                     IconButton(onClick = { /* TODO: 打开设置 */ }) {
                         Icon(Icons.Default.Settings, "设置")
